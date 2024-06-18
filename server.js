@@ -1,64 +1,65 @@
 const express = require('express');
+const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
+
 const app = express();
 const port = 3000;
 
-// Configurar el motor de plantillas EJS
-app.set('view engine', 'ejs');
-app.use(express.static('public'));
-app.use(bodyParser.urlencoded({ extended: true }));
+// Configurar middleware
+app.set('view engine', 'ejs'); // Motor de plantillas EJS
+app.use(express.static('public')); // Carpeta para archivos estáticos
+app.use(bodyParser.urlencoded({ extended: true })); // Parsear body de las peticiones POST
 
-// Conectar a la base de datos SQLite (usando un archivo en lugar de en memoria)
-let db = new sqlite3.Database('./database.db');
+// Configurar middleware para manejar sesiones
+app.use(session({
+    secret: 'secret-key', // Cambiar por una clave segura en producción
+    resave: false,
+    saveUninitialized: true,
+}));
 
-// Crear la tabla si no existe
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS data (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        categoria TEXT,
-        nombre TEXT,
-        descripcion TEXT,
-        link TEXT,
-        vigencia TEXT
-    )`, (err) => {
-        if (err) {
-            console.error(err.message);
-        } else {
-            // Comprobar si la tabla está vacía
-            db.get('SELECT COUNT(*) AS count FROM data', (err, row) => {
-                if (err) {
-                    console.error(err.message);
-                } else if (row.count === 0) {
-                    // Insertar datos iniciales si la tabla está vacía
-                    let insert = db.prepare(`INSERT INTO data (categoria, nombre, descripcion, link, vigencia) VALUES (?, ?, ?, ?, ?)`);
-                    insert.run('Compras', 'Comparaciones Variante Copia N', 'Controlar Unidades-Facturacion-Tickets Por categorias subcategorias Marcas y laboratorios', 'Link', 'Vigente');
-                    insert.run('Ventas', 'Completo Turnero 1.0', 'Analisis de Venta de sucursales y empleados por zona horaria y tipo de venta', 'Link', 'Vigente');
-                    insert.run('Ventas', 'Completo Convenios 1.0', 'Analisis de Venta de Convenios-Cantidad de empleados asociados y cuanto uso tuvo el beneficio del convenio', 'Link', 'Vigente');
-                    insert.run('Seguimentos Stock', 'Stock 1.1', 'Stock De sucursales Quiebres y movimientos en si por sucursal', 'Link', 'En Proceso');
-                    insert.run('Informe de incentivos', 'Completo Analisis', 'Compras sobre ventas - Mal Entregados,Cajas y pendientes', 'Link', 'En revision');
-                    insert.run('Eccomerce', 'Eccomerce 1.0', 'Analisis de Venta de sucursales y empleados por zona horaria y tipo de venta para las ventas de Eccomerce', 'Link', 'En Proceso');
-                    insert.run('Ventas Call', 'Ventas Call 1.0', 'Analisis de Venta de sucursales y empleados por zona horaria y tipo de venta para las ventas de Eccomerce', 'Link', 'En Proceso');
-                    insert.run('Recetas y Medicos', 'Medicos 1.0', 'Ver Avance de obras sociales por recetas y venta sumado a rendimiento de los medicos, monodrogas y laboratorios', 'Link', 'En revision');
-                    insert.finalize();
-                }
-            });
-        }
-    });
-});
+// Conectar a la base de datos SQLite
+let db = new sqlite3.Database('./database.db'); // Conectar a la base de datos database.db
 
-// Ruta para mostrar los datos
-app.get('/', (req, res) => {
+// Middleware para verificar si el usuario está autenticado
+function requireLogin(req, res, next) {
+    if (req.session.userId) {
+        next(); // Permitir acceso si el usuario está autenticado
+    } else {
+        res.redirect('/login'); // Redirigir al inicio de sesión si no hay sesión activa
+    }
+}
+
+// Middleware para verificar si el usuario es administrador
+function requireAdmin(req, res, next) {
+    if (req.session.userId) {
+        db.get('SELECT isAdmin FROM users WHERE id = ?', [req.session.userId], (err, user) => {
+            if (err) {
+                throw err;
+            }
+            if (user && user.isAdmin === 1) {
+                next(); // Permitir acceso si es administrador
+            } else {
+                res.send('Acceso denegado');
+            }
+        });
+    } else {
+        res.redirect('/login'); // Redirigir al inicio de sesión si no hay sesión activa
+    }
+}
+
+// Rutas
+app.get('/', requireLogin, (req, res) => {
     db.all('SELECT * FROM data', (err, rows) => {
         if (err) {
             throw err;
         }
-        res.render('index', { data: rows });
+        const isAdmin = req.session.isAdmin === 1; // Verificar si el usuario es administrador
+        res.render('index', { data: rows, isAdmin });
     });
 });
 
-// Ruta para mostrar el formulario de edición
-app.get('/edit/:id', (req, res) => {
+app.get('/edit/:id', requireAdmin, (req, res) => {
     const id = req.params.id;
     db.get('SELECT * FROM data WHERE id = ?', [id], (err, row) => {
         if (err) {
@@ -68,8 +69,7 @@ app.get('/edit/:id', (req, res) => {
     });
 });
 
-// Ruta para manejar la edición de datos
-app.post('/edit/:id', (req, res) => {
+app.post('/edit/:id', requireAdmin, (req, res) => {
     const id = req.params.id;
     const { categoria, nombre, descripcion, link, vigencia } = req.body;
     db.run('UPDATE data SET categoria = ?, nombre = ?, descripcion = ?, link = ?, vigencia = ? WHERE id = ?', [categoria, nombre, descripcion, link, vigencia, id], (err) => {
@@ -80,13 +80,11 @@ app.post('/edit/:id', (req, res) => {
     });
 });
 
-// Ruta para mostrar el formulario de creación
-app.get('/new', (req, res) => {
+app.get('/new', requireAdmin, (req, res) => {
     res.render('new');
 });
 
-// Ruta para manejar la creación de nuevos datos
-app.post('/new', (req, res) => {
+app.post('/new', requireAdmin, (req, res) => {
     const { categoria, nombre, descripcion, link, vigencia } = req.body;
     db.run('INSERT INTO data (categoria, nombre, descripcion, link, vigencia) VALUES (?, ?, ?, ?, ?)', [categoria, nombre, descripcion, link, vigencia], (err) => {
         if (err) {
@@ -96,6 +94,47 @@ app.post('/new', (req, res) => {
     });
 });
 
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    db.get('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, user) => {
+        if (err) {
+            throw err;
+        }
+        if (user) {
+            req.session.userId = user.id; // Almacenar el ID del usuario en la sesión
+            req.session.isAdmin = user.isAdmin; // Almacenar si el usuario es administrador en la sesión
+            res.redirect('/');
+        } else {
+            res.send('Credenciales incorrectas');
+        }
+    });
+});
+
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error(err);
+        }
+        res.redirect('/');
+    });
+});
+
+app.post('/delete/:id', requireAdmin, (req, res) => {
+    const id = req.params.id;
+    db.run('DELETE FROM data WHERE id = ?', [id], (err) => {
+        if (err) {
+            throw err;
+        }
+        res.redirect('/');
+    });
+});
+
+
+// Iniciar el servidor
 app.listen(port, () => {
     console.log(`Servidor corriendo en http://localhost:${port}`);
 });

@@ -2,18 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar Datos</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Custom styles -->
+    <style>
+        body {
+            padding: 20px;
+        }
+        form {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .delete-button {
+            margin-top: 20px;
+        }
+    </style>
 </head>
 <body>
-    <h1>Editar Datos</h1>
-    <form action="/edit/<%= item.id %>" method="POST">
-        <label>Categoria: <input type="text" name="categoria" value="<%= item.categoria %>"></label><br>
-        <label>Nombre: <input type="text" name="nombre" value="<%= item.nombre %>"></label><br>
-        <label>Descripcion: <input type="text" name="descripcion" value="<%= item.descripcion %>"></label><br>
-        <label>Link: <input type="text" name="link" value="<%= item.link %>"></label><br>
-        <label>Vigencia: <input type="text" name="vigencia" value="<%= item.vigencia %>"></label><br>
-        <button type="submit">Guardar</button>
-    </form>
-    <a href="/">Cancelar</a>
+    <div class="container">
+        <h1>Editar Datos</h1>
+        <form action="/edit/<%= item.id %>" method="POST">
+            <div class="form-group">
+                <label for="categoria">Categoría:</label>
+                <input type="text" id="categoria" name="categoria" class="form-control" value="<%= item.categoria %>">
+            </div>
+            <div class="form-group">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" class="form-control" value="<%= item.nombre %>">
+            </div>
+            <div class="form-group">
+                <label for="descripcion">Descripción:</label>
+                <textarea id="descripcion" name="descripcion" class="form-control" rows="4"><%= item.descripcion %></textarea>
+            </div>
+            <div class="form-group">
+                <label for="link">Link:</label>
+                <input type="text" id="link" name="link" class="form-control" value="<%= item.link %>">
+            </div>
+            <div class="form-group">
+                <label for="vigencia">Vigencia:</label>
+                <input type="text" id="vigencia" name="vigencia" class="form-control" value="<%= item.vigencia %>">
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Guardar Cambios</button>
+        </form>
+        
+        <!-- Botón para eliminar -->
+        <form action="/delete/<%= item.id %>" method="POST" class="delete-button">
+            <button type="submit" class="btn btn-danger btn-block">Eliminar Registro</button>
+        </form>
+        
+    </div>
 </body>
 </html>

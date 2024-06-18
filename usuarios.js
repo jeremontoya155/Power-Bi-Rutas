@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 
 // Conectar a la base de datos SQLite (crear usuarios.db si no existe)
-let db = new sqlite3.Database('./usuarios.db');
+let db = new sqlite3.Database('./database.db');
 
 // Insertar usuarios de ejemplo
 const usuarios = [

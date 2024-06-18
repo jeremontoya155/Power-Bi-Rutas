@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Datos</title>
+</head>
+<body>
+    <h1>Lista de Datos</h1>
+    <table border="1">
+        <tr>
+            <th>Categoria</th>
+            <th>Nombre</th>
+            <th>Descripcion</th>
+            <th>Link</th>
+            <th>Vigencia</th>
+            <th>Acciones</th>
+        </tr>
+        <% data.forEach(item => { %>
+        <tr>
+            <td><%= item.categoria %></td>
+            <td><%= item.nombre %></td>
+            <td><%= item.descripcion %></td>
+            <td><%= item.link %></td>
+            <td><%= item.vigencia %></td>
+            <td>
+                <a href="/edit/<%= item.id %>">Editar</a>
+            </td>
+        </tr>
+        <% }); %>
+    </table>
+    <a href="/new">Agregar Nuevo</a>
+</body>
+</html>

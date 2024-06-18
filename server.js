@@ -4,7 +4,7 @@ const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
 
 const app = express();
-const port = process.env.PORT||3000;
+const PORT = process.env.PORT||3000;
 
 // Configurar middleware
 app.set('view engine', 'ejs'); // Motor de plantillas EJS
@@ -135,6 +135,6 @@ app.post('/delete/:id', requireAdmin, (req, res) => {
 
 
 // Iniciar el servidor
-app.listen(port, () => {
-    console.log(`Servidor corriendo en http://localhost:${port}`);
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });

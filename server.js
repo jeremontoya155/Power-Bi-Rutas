@@ -2,9 +2,23 @@ const express = require('express');
 const session = require('express-session');
 const sqlite3 = require('sqlite3').verbose();
 const bodyParser = require('body-parser');
+const Swal = require('sweetalert2');
 
 const app = express();
-const PORT = process.env.PORT||3000;
+const PORT = process.env.PORT || 3000;
+
+// Configuración de SweetAlert2
+const SwalMixin = Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+        toast.addEventListener('mouseenter', Swal.stopTimer);
+        toast.addEventListener('mouseleave', Swal.resumeTimer);
+    }
+});
 
 // Configurar middleware
 app.set('view engine', 'ejs'); // Motor de plantillas EJS
@@ -50,7 +64,13 @@ function requireAdmin(req, res, next) {
 
 // Rutas
 app.get('/', requireLogin, (req, res) => {
-    db.all('SELECT * FROM data', (err, rows) => {
+    let query = 'SELECT * FROM data';
+    let params = [];
+    if (!req.session.isAdmin) {
+        const roles = req.session.roles.map(role => `'${role.trim()}'`).join(',');
+        query += ` WHERE categoria IN (${roles})`;
+    }
+    db.all(query, params, (err, rows) => {
         if (err) {
             throw err;
         }
@@ -107,6 +127,7 @@ app.post('/login', (req, res) => {
         if (user) {
             req.session.userId = user.id; // Almacenar el ID del usuario en la sesión
             req.session.isAdmin = user.isAdmin; // Almacenar si el usuario es administrador en la sesión
+            req.session.roles = user.roles ? user.roles.split(',') : []; // Verificar y dividir los roles si existen
             res.redirect('/');
         } else {
             res.send('Credenciales incorrectas');
@@ -123,13 +144,46 @@ app.get('/logout', (req, res) => {
     });
 });
 
-app.post('/delete/:id', requireAdmin, (req, res) => {
-    const id = req.params.id;
-    db.run('DELETE FROM data WHERE id = ?', [id], (err) => {
+// Ruta para manejar la vista de administración de roles
+// Ruta para manejar la vista de administración de roles
+app.get('/admin_roles', requireAdmin, (req, res) => {
+    // Obtener todas las categorías disponibles desde la tabla 'data'
+    db.all('SELECT DISTINCT categoria FROM data', (err, categories) => {
         if (err) {
             throw err;
         }
-        res.redirect('/');
+        // Obtener todos los usuarios y sus roles
+        db.all('SELECT id, username, roles FROM users', (err, users) => {
+            if (err) {
+                throw err;
+            }
+            // Convertir roles de string separado por comas a array
+            users.forEach(user => {
+                if (user.roles) {
+                    user.roles = user.roles.split(',').map(role => role.trim());
+                } else {
+                    user.roles = []; // Si no hay roles, inicializar como array vacío
+                }
+                user.rolesText = user.roles.join(', '); // Crear rolesText para mostrar en la vista
+            });
+            // Renderizar la vista 'admin_roles' con los usuarios y categorías obtenidos
+            res.render('admin_roles', { users, categories, successMessage: req.session.successMessage });
+            // Limpiar el mensaje de éxito después de mostrarlo una vez
+            req.session.successMessage = null;
+        });
+    });
+});
+
+// Ruta para modificar roles de usuarios
+app.post('/admin_roles/update', requireAdmin, (req, res) => {
+    const { userId, newRoles } = req.body;
+    db.run('UPDATE users SET roles = ? WHERE id = ?', [newRoles, userId], (err) => {
+        if (err) {
+            throw err;
+        }
+        // Configurar el mensaje de éxito en la sesión para mostrarlo en la próxima carga de página
+        req.session.successMessage = 'Roles actualizados correctamente';
+        res.redirect('/admin_roles');
     });
 });
 

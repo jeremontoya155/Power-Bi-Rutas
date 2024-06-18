@@ -52,6 +52,18 @@ db.serialize(() => {
         );
     });
 });
+app.get('/usernames', (req, res) => {
+    const query = 'SELECT username FROM users';
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Error al ejecutar la consulta:', err);
+            res.status(500).json({ error: 'Error al obtener los nombres de usuario' });
+        } else {
+            const usernames = rows.map(row => row.username);
+            res.json(usernames);
+        }
+    });
+});
 
 // Cerrar la conexión a la base de datos
 db.close((err) => {

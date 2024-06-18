@@ -8,9 +8,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Custom styles -->
     <style>
-        body {
-            padding: 20px;
-        }
+        
         form {
             max-width: 800px;
             margin: 0 auto;
@@ -29,8 +27,9 @@
     </style>
 </head>
 <body>
+    <%- include('partials/banner', { showBackButton: true }) %>
     <div class="container">
-        <h1>Editar Datos</h1>
+        <h1 class="mt-5">Editar Datos</h1>
         <form action="/edit/<%= item.id %>" method="POST">
             <div class="form-group">
                 <label for="categoria">Categoría:</label>
@@ -53,12 +52,13 @@
                 <input type="text" id="vigencia" name="vigencia" class="form-control" value="<%= item.vigencia %>">
             </div>
             <button type="submit" class="btn btn-primary btn-block">Guardar Cambios</button>
+            <form action="/delete/<%= item.id %>" method="POST" class="delete-button">
+                <button type="submit" class="btn btn-danger btn-block">Eliminar Registro</button>
+            </form> 
         </form>
         
         <!-- Botón para eliminar -->
-        <form action="/delete/<%= item.id %>" method="POST" class="delete-button">
-            <button type="submit" class="btn btn-danger btn-block">Eliminar Registro</button>
-        </form>
+       
         
     </div>
 </body>

@@ -32,6 +32,7 @@ app.use(session({
     saveUninitialized: true,
 }));
 
+
 // Conectar a la base de datos SQLite
 let db = new sqlite3.Database('./database.db'); // Conectar a la base de datos database.db
 
@@ -115,11 +116,22 @@ app.post('/new', requireAdmin, (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    res.render('login');
+    const query = 'SELECT id, username FROM users';
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error('Error al ejecutar la consulta:', err);
+            res.status(500).send('Error al obtener los nombres de usuario');
+        } else {
+            res.render('login', { users: rows });
+            
+        }
+    });
 });
+
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;
+    
     db.get('SELECT * FROM users WHERE username = ? AND password = ?', [username, password], (err, user) => {
         if (err) {
             throw err;
@@ -130,7 +142,7 @@ app.post('/login', (req, res) => {
             req.session.roles = user.roles ? user.roles.split(',') : []; // Verificar y dividir los roles si existen
             res.redirect('/');
         } else {
-            res.send('Credenciales incorrectas');
+            res.redirect('/');
         }
     });
 });
@@ -144,7 +156,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// Ruta para manejar la vista de administración de roles
 // Ruta para manejar la vista de administración de roles
 app.get('/admin_roles', requireAdmin, (req, res) => {
     // Obtener todas las categorías disponibles desde la tabla 'data'
@@ -173,11 +184,17 @@ app.get('/admin_roles', requireAdmin, (req, res) => {
         });
     });
 });
-
-// Ruta para modificar roles de usuarios
 app.post('/admin_roles/update', requireAdmin, (req, res) => {
     const { userId, newRoles } = req.body;
-    db.run('UPDATE users SET roles = ? WHERE id = ?', [newRoles, userId], (err) => {
+
+    // newRoles es un array que contiene las categorías seleccionadas
+    console.log('Categorías seleccionadas:', newRoles);
+
+    // Procesar las categorías seleccionadas como sea necesario
+    const rolesString = newRoles.join(','); // Convertir el array en una cadena separada por comas
+
+    // Ejemplo de actualización en la base de datos (puedes adaptar esto a tu lógica real)
+    db.run('UPDATE users SET roles = ? WHERE id = ?', [rolesString, userId], (err) => {
         if (err) {
             throw err;
         }
@@ -186,6 +203,24 @@ app.post('/admin_roles/update', requireAdmin, (req, res) => {
         res.redirect('/admin_roles');
     });
 });
+
+// Ruta para modificar roles de usuarios
+app.post('/admin_roles/update', requireAdmin, (req, res) => {
+    const { userId, newRoles } = req.body;
+
+    // Verificar si newRoles es un array y procesarlo
+    const rolesString = Array.isArray(newRoles) ? newRoles.join(',') : newRoles;
+
+    db.run('UPDATE users SET roles = ? WHERE id = ?', [rolesString, userId], (err) => {
+        if (err) {
+            throw err;
+        }
+        // Configurar el mensaje de éxito en la sesión para mostrarlo en la próxima carga de página
+        req.session.successMessage = 'Roles actualizados correctamente';
+        res.redirect('/admin_roles');
+    });
+});
+
 
 
 // Iniciar el servidor

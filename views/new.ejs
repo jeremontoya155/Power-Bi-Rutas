@@ -8,9 +8,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!-- Custom styles -->
     <style>
-        body {
-            padding: 20px;
-        }
+
         .form-container {
             max-width: 800px;
             margin: 0 auto;
@@ -26,9 +24,10 @@
     </style>
 </head>
 <body>
+    <%- include('partials/banner', { showBackButton: true }) %>
     <div class="container">
-        <div class="form-container">
-            <h1>Agregar Nuevo Dato</h1>
+        <div class="form-container mt-4">
+            <h1>Agregar Nuevo PowerBi</h1>
             <form action="/new" method="POST">
                 <div class="form-group">
                     <label for="categoria">Categoría:</label>

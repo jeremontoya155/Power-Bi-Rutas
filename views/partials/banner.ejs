@@ -38,16 +38,19 @@
             }
         }
         .boton {
-            padding: 10px;
-            border: 1px solid #252525;
-            border-radius:40%;
+            padding:10px;
+            border: 0px solid #252525;
+            border-radius:1em;
             background-color: #ea9e04;
             color: #fff;
-
+        }
+        .boton:hover{
+            background-color: #ffc041;
+            color: #252525; 
         }
         .flotanteIzq{
             position: absolute;
-            top: 30px;
+            top: 50px;
             left: 100px;
         }
         .flotanteDer{
@@ -62,11 +65,9 @@
     <% if (showBackButton) { %>
         <button onclick="window.history.back()" class="boton flotanteIzq">Volver</button>
     <% } %>
-
-
-    <a href="/logout" class="btn btn-danger flotanteDer">Cerrar sesión</a>
-        
-
+    <% if (loggedIn) { %>
+        <a href="/logout" class="btn btn-danger flotanteDer">Cerrar sesión</a>
+    <% } %>
 
     <div class="underline"></div>
     <h1 class="logo1 farmacias">FARMACIAS</h1>  

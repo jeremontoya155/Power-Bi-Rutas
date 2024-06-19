@@ -27,7 +27,7 @@
     </style>
 </head>
 <body>
-    <%- include('partials/banner', { showBackButton: true }) %>
+    <%- include('partials/banner', { showBackButton: true, loggedIn: true }) %>
     <div class="container">
         <h1 class="mt-5">Editar Datos</h1>
         <form action="/edit/<%= item.id %>" method="POST">

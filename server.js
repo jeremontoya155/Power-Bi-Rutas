@@ -115,19 +115,6 @@ app.post('/new', requireAdmin, (req, res) => {
     });
 });
 
-app.get('/login', (req, res) => {
-    const query = 'SELECT id, username FROM users';
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error('Error al ejecutar la consulta:', err);
-            res.status(500).send('Error al obtener los nombres de usuario');
-        } else {
-            res.render('login', { users: rows });
-            
-        }
-    });
-});
-
 
 app.post('/login', (req, res) => {
     const { username, password } = req.body;

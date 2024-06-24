@@ -152,8 +152,6 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// Ruta para manejar la vista de administración de roles
-// Ruta para manejar la vista de administración de roles
 app.get('/admin_roles', requireAdmin, (req, res) => {
     // Obtener todas las categorías disponibles desde la tabla 'data'
     db.all('SELECT DISTINCT categoria FROM data', (err, categories) => {

@@ -138,7 +138,7 @@ app.post('/login', (req, res) => {
             req.session.roles = user.roles ? user.roles.split(',') : []; // Verificar y dividir los roles si existen
             res.redirect('/');
         } else {
-            res.send('Credenciales incorrectas');
+            res.redirect('/login');
         }
     });
 });
